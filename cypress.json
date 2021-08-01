@@ -1,0 +1,9 @@
+{
+    
+    "chromeWebSecurity": false,
+    "defaultCommandTimeout":6000,
+    "pageLoadTimeout":6000,
+    "execTimeout":6000,
+    "video": false,   
+    "testFiles": "**/*.feature"
+}

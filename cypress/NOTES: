@@ -1,0 +1,225 @@
+1. Create folder on the desktop: cypress_cucumber_framework
+2. Open in the VSCode -drag and drop
+3. Install Cypress:
+*npm init -y  
+*npm install --save-dev cypress
+--------------------------
+4. Add cucumber dependencies:
+https://github.com/TheBrainFamily/cypress-cucumber-preprocessor
+
+*npm install --save-dev cypress-cucumber-preprocessor
+
+
+Cypress Configuration
+
+5. In cypress/plugins/index.js
+Add this code:
+
+const cucumber = require('cypress-cucumber-preprocessor').default
+module.exports = (on, config) => {
+  on('file:preprocessor', cucumber())
+}
+
+6. Add support for feature files to your Cypress configuration
+
+In cypress.json, Add below code
+
+{
+  "testFiles": "**/*.feature"
+}
+
+This command make .feature files runable
+
+
+7. In package.json Add bolow code:
+
+"cypress-cucumber-preprocessor": {
+  "nonGlobalStepDefinitions": true
+}
+
+SET UP IS COMPLETE--WE CAN NOW USE CUCUMBER feature
+
+*****Create first feature file:
+Create a ff: paylinn_login.feature
+
+ Feature: Login Functionality
+
+  Scenario: TC01_login
+    Given user in on the application page
+    And clicks on login link
+    # And user enters username and password
+    # And clicks on login button
+    # Then verify default page is displayed
+
+****Create first step definition
+We will create folders for each step definition
+The folder name must be same as feature file name
+The step definition file name can be different(.js)
+-create a folder : paylinn_login
+-create a .js file: paylinn_login.js(OR ANY NAME YOU WANT)
+import { Given,And,When, Then } from "cypress-cucumber-preprocessor/steps";
+
+Given('user in on the application page', () => {
+  cy.visit("https://paylinn.com/")
+})
+
+Given('clicks on login link', () => {
+    cy.contains('Sign In').click()
+  })
+
+*complete the test of the test cases
+---FEATURE FILE-----------
+ Feature: Login Functionality
+
+  Scenario: TC01_login
+    Given user in on the application page
+    And clicks on login link
+    When user enters username and password
+    And clicks on login button
+    Then verify default page is displayed
+----STEP DEFS-----
+    import { Given,And,When, Then } from "cypress-cucumber-preprocessor/steps";
+
+Given('user in on the application page', () => {
+  cy.visit("https://paylinn.com/")
+})
+
+And('clicks on login link', () => {
+    cy.contains('Sign In').click()
+  })
+
+  And('user enters username and password', () => {
+    // cy.contains('Sign In').click()
+    cy.get(':nth-child(1) > .MuiFormControl-root > .MuiInputBase-root > .MuiInputBase-input').type('User')
+    cy.get(':nth-child(2) > .MuiFormControl-root > .MuiInputBase-root > .MuiInputBase-input').type('user')
+  })
+
+  And('clicks on login button', () => {
+    cy.get('.MuiButton-label').click()
+   
+  })
+
+  Then('verify default page is displayed', () => {
+    cy
+    .get('.header__nav > :nth-child(1) > .header__lineOne')
+    .should('contain.text','Welcome')
+  })
+  -----------------------
+  *****SCENARIO OUTLINE***
+  -this is used to run multiple scenarios in single scenario outline 
+  -we can test with multiple data using single scenario outline
+  -For example, instead of using 5 scenario for5 different data, we can use single scenario outline to test with 5 different data 
+  -Note that Examples keyword must be used after scenario outline
+
+  Create feature file: scenario_outline_test.feature
+  ---------
+   Scenario Outline: searching the worlds capital
+
+    Given user is on the google page
+    When user search for "<world capitals>"
+    Then verify the result has "<world capitals>"
+
+  Examples: capitals
+  |world capitals|
+  |london        |
+  |paris         |
+  |vienna        |
+  |madrid        |
+  -
+Create folder same as feature file name
+scenario_outline_test
+js file name : google_search.js
+--------
+import { Given,And,When,Then } from "cypress-cucumber-preprocessor/steps";
+
+Given('user is on the google page', () => {
+    cy.visit("https://www.google.com/")
+  })
+
+When('user search for {string}', (capitals) => {
+cy.get('.gLFyf').type(capitals)
+cy.get('.FPdoLc > center > .gNO89b').click({force: true})
+})
+
+When('verify the result has {string}', (capitals) => {
+    //Verifying if page title includes capitals
+    cy.title().should('include',capitals)
+    })
+  ------
+*****DATA TABLES****
+Create a feature file : data_tables_test.feature
+--------
+Feature: login_with_manager_creds
+
+Scenario: manager_id
+    Given user in on the application page
+    And user login with below data
+    |username   |pasword   |
+    |manager    |Manager1! |
+    And clicks on login button
+    Then verify default page is displayed
+--------------------
+Craete a folder : data_tables_test
+Create a js file in that folder : login_test.js
+--------------
+import { Given,And,When, Then } from "cypress-cucumber-preprocessor/steps";
+
+Given('user in on the application page', () => {
+    cy.visit('https://qa-environment.resortsline.com/Account/Logon')
+  })
+
+
+  And('user login with below data', (dataTable) => {
+
+    // manager is on the 2nd row 1st column [1][0]
+    cy.get('#UserName').type(dataTable.rawTable[1][0])
+
+    // Manager1! is on the 2nd row 2nd column [1][1]
+    cy.get('#Password').type(dataTable.rawTable[1][1])
+
+    cy.wait(3000)
+  })
+
+  And('clicks on login button', () => {
+    cy.get('#btnSubmit').click()
+  })
+
+  Then('verify default page is displayed', () => {
+    cy.get('.username').should('contain.text','manager')
+  })
+--------
+Add one more scenario in the same feature file
+
+===========
+*****Cucumber Tags********
+Tags are used to controll the test flow
+run specific scenarios 
+skip specific scenarios
+
+Documentation note:
+  ./node_modules/.bin/cypress-tags run -e TAGS='not @foo and (@bar or @zap)'
+
+./node_modules/.bin/cypress-tags run -e TAGS='@manager_id'
+
+Skip specific tags:
+This runs all feature files except @manager_id tag
+./node_modules/.bin/cypress-tags run -e TAGS='not @manager_id'
+
+===========================================
+NOTES:
+In cypress.json file, you can add this configuration not to record video
+and add custom timeouts
+cypress default timeout is 4 sec, here we are giving 6 sec
+{
+    
+    "chromeWebSecurity": false,
+    "defaultCommandTimeout":6000,
+    "pageLoadTimeout":6000,
+    "execTimeout":6000,
+    "video": false,   
+    "testFiles": "**/*.feature"
+}
+========================
+Add @smoke tag some of your scenarios
+Then run below command all scenarios that has @smoke tag
+./node_modules/.bin/cypress-tags run -e TAGS='@smoke'
